@@ -9,12 +9,7 @@ const getFileManagerPlugin = () => {
   return new FileManagerPlugin({
     events: {
       onEnd: {
-        // copy: [
-        //   {
-        //     source: "build/manifest.json",
-        //     destination: "build/manifest.json",
-        //   },
-        // ],
+        // remove index.html which will have reference scripts of all [entry].js instead we will use ui.html from public folder to have our ui refernce to single main.js only
         delete: extensionBuildFiles.map((filename) => `build/${filename}`),
       },
     },
@@ -23,60 +18,41 @@ const getFileManagerPlugin = () => {
 
 module.exports = {
   webpack: function (config) {
-    const isExtensionBuild = true;
     const environment = process.env.REACT_APP_ENVIRONMENT;
 
-    // The default webpack configuration from `Create React App` can be used
-    // if the app is not built as a chrome extension with the `build:extension` script.
-    if (!isExtensionBuild) {
-      config.plugins = config.plugins.concat(getFileManagerPlugin());
-      return config;
-    }
-    // The webpack configuration will be updated
-    // for the production build of the extension.
-    else {
-      // Disable bundle splitting,
-      // a single bundle file has to loaded as `content_script`.
-      config.optimization.splitChunks = {
-        cacheGroups: {
-          default: false,
-        },
-      };
+    // Disable bundle splitting,
+    config.optimization.splitChunks = {
+      cacheGroups: {
+        default: false,
+      },
+    };
+    // Code build files minimize - disable for dev
+    config.optimization.minimize = environment === "dev" ? true : false;
 
-      console.log("environment", environment);
+    // `false`: each entry chunk embeds runtime.
+    config.optimization.runtimeChunk = false;
 
-      config.optimization.minimize = environment === "dev" ? true : false;
+    config.entry = {
+      main: "./src/index.tsx",
+      background: "./src/background/index.js",
+      content: "./src/content/index.js",
+    };
 
-      // `false`: each entry chunk embeds runtime.
-      // The extension is built with a single entry including all JS.
-      // https://symfonycasts.com/screencast/webpack-encore/single-runtime-chunk
-      config.optimization.runtimeChunk = false;
+    // The `[name]` is taken from `config.entry` properties, so if we have `main` , 'content' and `background` as properties, we get 3 output files - main.js, content.js and background.js.
+    config.output.filename = "[name].js";
 
-      config.entry = {
-        // web extension
-        main: "./src/index.tsx",
-        // background script that has to be referenced in the extension manifest
-        background: "./src/background/index.js",
-        content: "./src/content/index.js",
-      };
+    // `MiniCssExtractPlugin` is used by the default CRA webpack configuration for
+    // extracting CSS into separate files. The plugin has to be removed because it
+    // uses `[contenthash]` in filenames of the separate CSS files.
+    config.plugins = config.plugins
+      .filter((plugin) => !(plugin instanceof MiniCssExtractPlugin))
+      .concat(
+        // `MiniCssExtractPlugin` is used with its default config instead,
+        // which doesn't contain `[contenthash]`.
+        new MiniCssExtractPlugin(),
+        getFileManagerPlugin()
+      );
 
-      // Filenames of bundles must not include `[contenthash]`, so that they can be referenced in `extension-manifest.json`.
-      // The `[name]` is taken from `config.entry` properties, so if we have `main` and `background` as properties, we get 2 output files - main.js and background.js.
-      config.output.filename = "[name].js";
-
-      // `MiniCssExtractPlugin` is used by the default CRA webpack configuration for
-      // extracting CSS into separate files. The plugin has to be removed because it
-      // uses `[contenthash]` in filenames of the separate CSS files.
-      config.plugins = config.plugins
-        .filter((plugin) => !(plugin instanceof MiniCssExtractPlugin))
-        .concat(
-          // `MiniCssExtractPlugin` is used with its default config instead,
-          // which doesn't contain `[contenthash]`.
-          new MiniCssExtractPlugin(),
-          getFileManagerPlugin()
-        );
-
-      return config;
-    }
+    return config;
   },
 };
