@@ -1,7 +1,7 @@
 /* global chrome */
 
 import React from 'react';
-import logo from './logo.svg';
+import logo from './static/react.png';
 import './App.css';
 
 
@@ -33,6 +33,7 @@ function App() {
     <div className="App">
       <header className="App-header">
        <h1 onClick={handleSendMessage}>Open stackoverflow</h1>
+       <img src={logo} alt="react" />
       </header>
     </div>
   );

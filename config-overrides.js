@@ -4,38 +4,18 @@ const FileManagerPlugin = require("filemanager-webpack-plugin");
 // Adds a manifest file to the build according to the current context,
 // and deletes files from the build that are not needed in the current context
 const getFileManagerPlugin = () => {
-  const isExtensionBuild = true;
-  const webAppBuildFiles = [
-    "index.html",
-    "favicon.ico",
-    "logo192.png",
-    "logo512.png",
-    "robots.txt",
-    "asset-manifest.json",
-  ];
-  const extensionBuildFiles = ["icon16.png", "icon48.png", "icon128.png"];
-
-  const manifestFiles = {
-    webApp: "build/web-app-manifest.json",
-    extension: "build/manifest.json",
-  };
+  const extensionBuildFiles = ["index.html"];
 
   return new FileManagerPlugin({
     events: {
       onEnd: {
-        copy: [
-          {
-            source: isExtensionBuild
-              ? manifestFiles.extension
-              : manifestFiles.webApp,
-            destination: "build/manifest.json",
-          },
-        ],
-        // delete: Object.values(manifestFiles).concat(
-        //   (isExtensionBuild ? webAppBuildFiles : extensionBuildFiles).map(
-        //     (filename) => `build/${filename}`
-        //   )
-        // ),
+        // copy: [
+        //   {
+        //     source: "build/manifest.json",
+        //     destination: "build/manifest.json",
+        //   },
+        // ],
+        delete: extensionBuildFiles.map((filename) => `build/${filename}`),
       },
     },
   });
@@ -61,6 +41,8 @@ module.exports = {
           default: false,
         },
       };
+
+      // config.optimization.minimize=false;
 
       // `false`: each entry chunk embeds runtime.
       // The extension is built with a single entry including all JS.

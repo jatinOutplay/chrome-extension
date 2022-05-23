@@ -4,7 +4,7 @@ console.log("background.js running");
 
 chrome.action.onClicked.addListener(function (activeTab) {
   chrome.windows.create({
-    url: chrome.runtime.getURL("index.html"),
+    url: chrome.runtime.getURL("ui.html"),
     type: "popup",
     width: 200,
     height: 200,
