@@ -24,6 +24,7 @@ const getFileManagerPlugin = () => {
 module.exports = {
   webpack: function (config) {
     const isExtensionBuild = true;
+    const environment = process.env.REACT_APP_ENVIRONMENT;
 
     // The default webpack configuration from `Create React App` can be used
     // if the app is not built as a chrome extension with the `build:extension` script.
@@ -42,7 +43,9 @@ module.exports = {
         },
       };
 
-      // config.optimization.minimize=false;
+      console.log("environment", environment);
+
+      config.optimization.minimize = environment === "dev" ? true : false;
 
       // `false`: each entry chunk embeds runtime.
       // The extension is built with a single entry including all JS.
